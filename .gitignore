@@ -27,3 +27,10 @@ nohup.out
 push_to_server.bat
 push_to_server.ps1
 init_and_push.ps1
+remove_docs.ps1
+
+# Documentation / business specs (sensitive)
+*.md
+*.docx
+*.xlsx
+*.xls
