@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 检索 Blog 自动生成器</title>
+    <link rel="stylesheet" href="/assets/styles.css?v=20260529-01" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="topHero">
+        <div>
+          <p class="eyebrow">AI Search Blog Generator</p>
+          <h1>AI 检索 Blog 自动生成器</h1>
+          <p>自动生成面向 AI 搜索曝光的商品推广 Blog，并通过多轮内容迭代提升文章质量。</p>
+          <div class="heroMeta">
+            <span>Brief → Research → Outline → Blog</span>
+            <span>AI Visibility</span>
+            <span>Versioned Iteration</span>
+          </div>
+        </div>
+      </header>
+
+      <nav class="moduleNav">
+        <button class="moduleCard active" data-module="generate">
+          <span>01</span>
+          <b>生成 Blog</b>
+          <small>一页一页推进生成</small>
+        </button>
+        <button class="moduleCard" data-module="library">
+          <span>02</span>
+          <b>文章库</b>
+          <small>查看、预览、删除已生成 Blog</small>
+        </button>
+        <button class="moduleCard" data-module="training">
+          <span>03</span>
+          <b>内容迭代</b>
+          <small>选择 Blog 做多轮内容优化</small>
+        </button>
+        <button class="moduleCard" data-module="settings">
+          <span>04</span>
+          <b>全局设置</b>
+          <small>API、语言、场景、Prompt</small>
+        </button>
+      </nav>
+
+      <section class="module active" id="generateModule">
+        <div class="wizardProgress">
+          <button class="wizardDot active" data-wizard-step="0">1 需求</button>
+          <button class="wizardDot" data-wizard-step="1">2 搜索/标题/大纲</button>
+          <button class="wizardDot" data-wizard-step="2">3 正文</button>
+        </div>
+        <section class="stepCard wizardPage active" data-wizard-page="0">
+          <div class="stepHead">
+            <span class="stepNo">01</span>
+            <div>
+              <h2>输入需求与商品信息</h2>
+              <p>这部分只属于 Blog 生成链路。</p>
+            </div>
+          </div>
+          <div class="formStack">
+            <div class="fieldGrid compactTopGrid">
+              <label>生成语言
+                <select id="outputLanguage">
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+            </div>
+            <section class="suggestionDock productSuggestionDock">
+              <div class="suggestionHead">
+                <span>产品 Blog 方向推荐</span>
+                <small>每次打开会换一批，点击可快速填入产品和推广方向</small>
+              </div>
+              <div id="productSuggestionCards" class="productSuggestionCards"></div>
+            </section>
+            <label>用户需求
+              <textarea id="brief" rows="6" placeholder="例如：推广一款精密手摇咖啡磨豆机，希望让准备购买咖啡器具的人在 AI 搜索中更容易看到我们的产品。"></textarea>
+            </label>
+            <div class="fieldGrid">
+              <label>宣传商品类型<input id="productType" placeholder="precision hand grinder / 护肤精华 / 露营灯" /></label>
+              <label>商品名称<input id="productName" placeholder="品牌名或 SKU，可选" /></label>
+              <label>目标用户<input id="targetAudience" placeholder="home baristas / 新手妈妈 / 礼品买家" /></label>
+              <label>推广目标<input id="promotionGoal" placeholder="AI 检索曝光 / 新品宣传 / 转化" /></label>
+              <label>市场<input id="market" placeholder="United States / 中国 / Europe" /></label>
+            </div>
+            <label>关键词、竞品与补充信息
+              <textarea id="keywords" rows="4" placeholder="关键词、竞品 URL、价格、材质、卖点、限制、品牌口吻、必须出现或避开的内容。"></textarea>
+            </label>
+            <section class="suggestionDock keywordSuggestionDock">
+              <div class="suggestionHead">
+                <span>AI 搜索增强</span>
+                <small>补充结构化关键词、比较角度和可引用要点</small>
+              </div>
+              <div id="searchSuggestionChips" class="suggestionChips"></div>
+            </section>
+            <div class="uploadGrid">
+              <label>文本资料上传
+                <input id="productFile" type="file" accept=".txt,.md,.csv,.json" />
+                <small>文本资料会传给模型作为商品上下文。</small>
+              </label>
+              <label>图片插入
+                <input id="imageFiles" type="file" accept="image/*" multiple />
+                <small>图片会根据正文结构插入到更合适的章节位置。</small>
+              </label>
+            </div>
+            <section class="imagePlanGrid">
+              <article class="imagePlanCard active" data-image-mode="manual">
+                <b>手动生图 Prompt</b>
+                <span>自己输入图片描述，后续接入生图模型后可直接生成并插入。</span>
+              </article>
+              <article class="imagePlanCard" data-image-mode="auto">
+                <b>根据文章内容生成</b>
+                <span>生成正文后自动从文章主题、商品和场景整理图片 Prompt。</span>
+              </article>
+              <label class="imagePromptField">图片生成 Prompt
+                <textarea id="imagePrompt" rows="3" placeholder="例如：一张电商博客封面图，展示便携手冲咖啡壶在露营桌面上的使用场景，真实摄影风格。"></textarea>
+              </label>
+              <button class="secondaryButton" id="generateImageBtn" type="button">生成图片占位</button>
+              <p id="imagePlanStatus" class="muted">生图模型接口已预留，当前不会真实生成图片。</p>
+            </section>
+          </div>
+          <div class="wizardActions">
+            <button class="primaryButton wizardNext" type="button">下一步：生成大纲</button>
+          </div>
+        </section>
+
+        <section class="stepCard wizardPage" data-wizard-page="1">
+          <div class="stepHead outlineHeroHead">
+            <span class="stepNo">02</span>
+            <div>
+              <h2>搜索参考、生成标题并确认大纲</h2>
+              <p id="outlineStatus">先搜索参考并自动识别内容方向，再生成标题候选，确认标题后生成大纲。</p>
+            </div>
+            <div class="buttonRow">
+              <button class="primaryButton" id="prepareOutlineBtn">搜索并生成标题</button>
+            </div>
+          </div>
+          <div class="outlineFlowSteps" aria-label="大纲生成顺序">
+            <span data-flow-step="research">1 搜索与生成标题</span>
+            <span data-flow-step="outline">2 生成大纲</span>
+          </div>
+          <section class="outlineSubPage active" data-outline-subpage="research">
+            <section class="outlineReferencePanel">
+              <div class="sectionTitle">
+                <div>
+                  <h3>引用参考</h3>
+                  <p id="referenceStatus" class="muted">根据当前需求搜索 Top Blog 链接，后续可作为正文引用和文末参考来源。</p>
+                </div>
+                <button class="secondaryButton" id="searchReferencesBtn">重新搜索参考</button>
+              </div>
+              <div class="referenceToolbar">
+                <label>搜索词
+                  <input id="referenceQuery" placeholder="默认根据商品类型、目标市场和大纲自动生成" />
+                </label>
+                <button class="secondaryButton" id="selectAllCitationRefs" type="button">全选引用</button>
+                <button class="textButton" id="clearReferenceSelection" type="button">清空选择</button>
+              </div>
+              <div id="referenceProgress" class="inlineProgress" hidden></div>
+              <div id="referenceCards" class="referenceCards"></div>
+            </section>
+            <section class="titlePanel">
+              <div class="sectionTitle">
+                <div>
+                  <h3>标题候选</h3>
+                  <p id="titleStatus" class="muted">搜索和内部意图识别完成后，会生成可选择和可手动修改的标题。</p>
+                </div>
+                <label class="titleEditField">当前标题
+                  <input id="selectedTitleInput" placeholder="选择一个标题，也可以直接手动修改" />
+                </label>
+              </div>
+              <div id="titleCards" class="titleCards"></div>
+            </section>
+          </section>
+          <section class="intentPanel internalIntentPanel" hidden>
+            <div class="sectionTitle">
+              <div>
+                <h3>内部意图分析</h3>
+                <p id="intentStatus" class="muted">内部使用，不展示给客户。</p>
+              </div>
+              <button class="secondaryButton" id="analyzeIntentBtn" type="button">重新分析意图</button>
+            </div>
+            <div id="intentProgress" class="inlineProgress" hidden></div>
+            <div id="intentCards" class="intentCards"></div>
+          </section>
+          <section class="outlineSubPage" data-outline-subpage="outline">
+          <div class="outlineLayout">
+            <section class="outlinePreviewPanel">
+              <div class="sectionTitle">
+                <h3>当前大纲</h3>
+                <span class="outlineBadge">用于下一步正文生成</span>
+              </div>
+              <div id="outlineCards" class="outlineCards"></div>
+              <div id="topicCards" class="outlineCards" hidden></div>
+            </section>
+            <section class="outlineEditorPanel">
+              <div class="sectionTitle">
+                <h3>编辑标题结构</h3>
+                <button class="secondaryButton" id="applyOutlineEditor" type="button">同步编辑</button>
+              </div>
+              <p class="muted">直接修改 H1、H2、H3 标题，点击“同步编辑”后会同步到 JSON，并作为下一步正文生成依据。</p>
+              <div id="outlineEditor" class="outlineEditableTree"></div>
+              <details class="outlineJsonDetails">
+                <summary>查看原始 JSON</summary>
+                <textarea id="outlineJson" rows="12" placeholder="生成大纲后会同步到这里，作为调试和备份。"></textarea>
+              </details>
+            </section>
+          </div>
+          </section>
+          <div id="outlineProgress" class="inlineProgress" hidden></div>
+          <div class="wizardActions">
+            <button class="secondaryButton wizardBack" type="button">上一步</button>
+            <button class="secondaryButton" id="outlineSubBack" type="button">上一步</button>
+            <button class="primaryButton" id="outlineSubNext" type="button">下一步</button>
+          </div>
+        </section>
+
+        <section class="stepCard wizardPage" data-wizard-page="2">
+          <div class="stepHead">
+            <span class="stepNo">03</span>
+            <div>
+              <h2>生成正文</h2>
+              <p>这里是最终交付的 Blog 生成，不混入配置面板。</p>
+            </div>
+            <button class="primaryButton" id="generateBtn">生成正文</button>
+          </div>
+          <p class="muted">正文会使用全局正文 Prompt 和内部 AI 检索策略生成。用户侧不需要额外填写生成策略。</p>
+          <div class="preferenceStrip">
+            <label>正文偏好
+              <select id="seoGeoPreference">
+                <option value="geo">GEO 优先：适合 AI 检索引用</option>
+                <option value="seo">SEO 优先：适合搜索排名和点击</option>
+                <option value="both">双版本：同时输出 SEO + GEO</option>
+              </select>
+            </label>
+            <p class="muted">偏好会决定最终交付正文使用哪套规则；双版本用于内部对比或同时发布策略。</p>
+          </div>
+          <div id="generationReferenceSummary" class="referenceSummary"></div>
+          <div class="wizardActions">
+            <button class="secondaryButton wizardBack" type="button">上一步</button>
+            <button class="secondaryButton" id="viewLibraryAfterGenerate" type="button">查看文章库</button>
+          </div>
+          <div id="generateProgress" class="inlineProgress" hidden></div>
+        </section>
+      </section>
+
+      <section class="module" id="libraryModule">
+        <section class="stepCard resultCard">
+          <div class="stepHead">
+            <span class="stepNo">02</span>
+            <div>
+              <h2>已生成 Blog</h2>
+              <p id="resultMeta">选择一篇本地文章后查看 Markdown。</p>
+            </div>
+            <div class="buttonRow">
+              <button class="secondaryButton" id="copyMarkdown">复制 Markdown</button>
+              <button class="secondaryButton" id="openImportMarkdown" type="button">导入文档</button>
+              <button class="dangerButton" id="deleteCurrent">删除当前</button>
+            </div>
+          </div>
+          <div class="resultLayout">
+            <aside class="libraryPanel">
+              <div class="libraryHead">
+                <h3>本地文章</h3>
+                <button class="textButton" id="refreshBlogs">刷新</button>
+              </div>
+              <div class="libraryFilters">
+                <label class="searchField">
+                  <span>搜索</span>
+                  <input id="librarySearch" placeholder="搜索标题、商品、标签、版本名" />
+                </label>
+                <label>
+                  <span>时间字段</span>
+                  <select id="libraryDateField">
+                    <option value="updatedAt">最后修改日期</option>
+                    <option value="createdAt">创建日期</option>
+                  </select>
+                </label>
+                <label>
+                  <span>开始日期</span>
+                  <input id="libraryDateFrom" type="date" />
+                </label>
+                <label>
+                  <span>结束日期</span>
+                  <input id="libraryDateTo" type="date" />
+                </label>
+                <button class="secondaryButton" id="clearLibraryFilters" type="button">清除筛选</button>
+              </div>
+              <div id="libraryList" class="libraryList"></div>
+            </aside>
+          </div>
+        </section>
+      </section>
+
+      <section class="module" id="trainingModule">
+        <section class="stepCard">
+          <div class="stepHead">
+            <span class="stepNo">02</span>
+            <div>
+              <h2>内容迭代</h2>
+              <p>选择或输入一篇 Blog，评价 AI 打分并给建议，修改 AI 直接优化当前文章内容，多轮后输出更好的正文。</p>
+            </div>
+            <button class="primaryButton" id="scoreArticleBtn">开始迭代</button>
+          </div>
+          <div class="settingsBlock trainingBlogPicker">
+            <div class="sectionTitle">
+              <h3>选择已有 Blog</h3>
+              <div class="buttonRow">
+                <button class="secondaryButton" id="openTrainingBlogPicker" type="button">选择文章</button>
+                <button class="textButton" id="clearTrainingBlog" type="button">清空选择</button>
+              </div>
+            </div>
+            <p id="trainingBlogMeta" class="muted">选择文章后，会把该 Blog 的正文作为迭代起点。</p>
+          </div>
+          <div class="iterationInputGrid">
+            <label>迭代内容/需求
+              <textarea id="trainingArticle" rows="10" placeholder="可以粘贴当前 Blog 正文，或描述这次要优化的商品、目标用户、流量目标和风格要求。"></textarea>
+            </label>
+            <label>迭代目标
+              <textarea id="trainingRubric" rows="5" placeholder="例如：提高 AI 检索曝光、读起来不像 AI、提升浏览量、加强商品证据。"></textarea>
+            </label>
+            <label>人工观察
+              <textarea id="trainingFeedback" rows="5" placeholder="你自己的评分或修改意见。"></textarea>
+            </label>
+            <label>迭代轮数
+              <input id="trainingRounds" type="number" min="1" max="6" value="3" />
+            </label>
+          </div>
+          <div class="iterationSaveBar">
+            <label>版本 Tag
+              <input id="iterationTag" placeholder="例如 v2-human / FAQ增强 / 2026-05-18" />
+            </label>
+            <div class="buttonRow">
+              <button class="secondaryButton" id="saveIterationAsBlog" type="button">保存最终版本</button>
+              <button class="secondaryButton" id="saveAllIterationRounds" type="button">保存全部轮次</button>
+              <button class="secondaryButton" id="overwriteIterationBlog" type="button">覆盖原文章</button>
+            </div>
+          </div>
+          <div id="trainingScorePanel" class="scorePanel"></div>
+          <div id="trainingProgress" class="inlineProgress" hidden></div>
+          <div id="promptEvolution" class="promptEvolution"></div>
+          <div class="settingsBlock compareBlock">
+            <div class="sectionTitle">
+              <div>
+                <h3>评分比较</h3>
+                <p class="muted">选择若干文章，只调用评价 AI 分别打分，不修改正文。</p>
+              </div>
+              <button class="secondaryButton" id="openCompareBlogPicker" type="button">选择文章</button>
+            </div>
+            <div id="compareSelectionSummary" class="referenceSummary"></div>
+            <label>比较标准
+              <textarea id="compareRubric" rows="4" placeholder="例如：重点看真人感、AI 检索曝光、引用可信度、结构清晰度、商品转化潜力。"></textarea>
+            </label>
+            <div class="buttonRow">
+              <button class="primaryButton" id="compareScoreBtn" type="button">开始评分比较</button>
+              <button class="textButton" id="clearCompareSelection" type="button">清空选择</button>
+            </div>
+            <div id="compareProgress" class="inlineProgress" hidden></div>
+            <div id="compareResults" class="promptEvolution"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="module" id="settingsModule">
+        <section class="stepCard">
+          <div class="stepHead">
+            <span class="stepNo">03</span>
+            <div>
+              <h2>全局设置</h2>
+              <p>把基础场景、搜索服务、API 分配和 Prompt 系统拆开维护，避免配置混在一起。</p>
+            </div>
+            <button class="primaryButton" id="saveSettings">保存全局设置</button>
+          </div>
+
+          <div class="settingsSubnav" role="tablist" aria-label="全局设置二级页面">
+            <button class="settingsTab isActive" data-settings-page="basic" type="button">1 基础配置</button>
+            <button class="settingsTab" data-settings-page="search" type="button">2 搜索与客户源</button>
+            <button class="settingsTab" data-settings-page="models" type="button">3 模型与 API</button>
+            <button class="settingsTab" data-settings-page="prompts" type="button">4 Prompt 系统</button>
+          </div>
+
+          <div class="settingsPage isActive" data-settings-page-panel="basic">
+          <div class="settingsSectionCard">
+            <div class="settingsSectionHead">
+              <span>01</span>
+              <div>
+                <h3>基础场景</h3>
+                <p class="muted">控制默认 Prompt 系统和业务场景，不影响生成页里的正文输出语言选择。</p>
+              </div>
+            </div>
+            <div class="assignmentGrid">
+              <label>当前场景
+                <input id="scenarioName" placeholder="电商 Blog / Shopify 商品宣传 / AI 搜索曝光" />
+              </label>
+              <label>默认 Prompt 系统
+                <select id="language">
+                  <option value="zh">中文 Prompt 系统</option>
+                  <option value="en">English Prompt System</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="settingsSectionCard">
+            <div class="settingsSectionHead">
+              <span>02</span>
+              <div>
+                <h3>GPTZero 英文检测</h3>
+                <p class="muted">GPTZero 不是大模型，只在英文文章评分时作为辅助检测；中文仍只使用内容评分模型。</p>
+              </div>
+            </div>
+            <div class="assignmentGrid">
+              <label class="checkboxLabel"><input id="gptZeroEnabled" type="checkbox" /> 启用 GPTZero</label>
+              <label>GPTZero Endpoint
+                <input id="gptZeroEndpoint" placeholder="待注册后填写 GPTZero 检测接口 URL" />
+              </label>
+              <label>GPTZero API Key
+                <input id="gptZeroApiKey" type="password" placeholder="留空表示沿用已保存 Key" />
+              </label>
+              <label>GPTZero 权重
+                <input id="gptZeroWeight" type="number" min="0" max="1" step="0.05" value="0.35" />
+              </label>
+              <label>GPTZero 超时秒数
+                <input id="gptZeroTimeoutSeconds" type="number" min="10" max="180" value="60" />
+              </label>
+            </div>
+          </div>
+          </div>
+
+          <div class="settingsPage" data-settings-page-panel="search">
+          <div class="settingsSectionCard">
+            <div class="settingsSectionHead">
+              <span>01</span>
+              <div>
+                <h3>搜索与排序</h3>
+                <p class="muted">SearXNG 负责全网召回，过滤排序接口只处理候选结果并返回重排。</p>
+              </div>
+            </div>
+            <div class="assignmentGrid">
+              <label>SearXNG Endpoint
+                <input id="searxngEndpoint" placeholder="http://10.10.130.82:8080" />
+              </label>
+              <label>过滤排序接口
+                <input id="rankerEndpoint" placeholder="可选：只接收候选结果并返回排序后的接口" />
+              </label>
+              <label>默认搜索数量
+                <input id="searchMaxResults" type="number" min="3" max="20" value="15" />
+              </label>
+              <label>搜索超时秒数
+                <input id="searchTimeoutSeconds" type="number" min="5" max="120" value="25" />
+              </label>
+            </div>
+            <details class="sourceTuningDetails">
+              <summary>过滤排序控制</summary>
+              <div class="assignmentGrid">
+                <label class="checkboxLabel"><input id="searxngEnabled" type="checkbox" /> 启用 SearXNG 公网聚合搜索</label>
+                <label class="checkboxLabel"><input id="rankerEnabled" type="checkbox" /> 启用 NewsFilter 过滤排序接口</label>
+                <label>域名加权 JSON
+                  <textarea id="domainWeights" rows="5" placeholder='{"example.com": 3, "trusted-source.com": 5}'></textarea>
+                </label>
+              </div>
+              <p class="muted">SearXNG 只负责全网召回；过滤排序接口只接收这些候选结果并返回排序结果，不再由它重新搜索本地站点。未配置接口时会使用内置排序逻辑。</p>
+            </details>
+          </div>
+
+          <div class="settingsSectionCard">
+            <div class="sectionTitle">
+              <div class="settingsSectionHead inline">
+                <span>02</span>
+                <div>
+                  <h3>客户搜索源</h3>
+                  <p class="muted">把客户域名、产品页或参考链接混入候选结果，再统一参与过滤排序。</p>
+                </div>
+              </div>
+              <button class="secondaryButton" id="addCustomerSource" type="button">新增客户源</button>
+            </div>
+            <div id="customerSources" class="apiProfiles"></div>
+          </div>
+          </div>
+
+          <div class="settingsPage" data-settings-page-panel="models">
+          <div class="settingsSectionCard">
+            <div class="sectionTitle">
+              <div class="settingsSectionHead inline">
+                <span>01</span>
+                <div>
+                  <h3>任务分配</h3>
+                  <p class="muted">不同任务可以选择不同 API 卡片，用便宜模型做规划，用强模型写正文。</p>
+                </div>
+              </div>
+              <button class="secondaryButton" id="addApiProfile" type="button">新增 API 卡片</button>
+            </div>
+            <div class="assignmentGrid">
+              <label>大纲生成模型<select id="outlineProfile"></select></label>
+              <label>正文生成模型<select id="articleProfile"></select></label>
+              <label>内容评分模型<select id="evaluatorProfile"></select></label>
+              <label>内容修改模型<select id="revisionProfile"></select></label>
+              <label>图片生成模型<select id="imageProfile"></select></label>
+              <label>搜索规划模型<select id="searchPlannerProfile"></select></label>
+              <label>实体提取模型<select id="entityExtractorProfile"></select><small class="muted">未分配时自动复用大纲模型</small></label>
+            </div>
+          </div>
+
+          <div class="settingsSectionCard">
+            <div class="settingsSectionHead">
+              <span>02</span>
+              <div>
+                <h3>已保存 API</h3>
+                <p class="muted">这里只展示摘要，点击卡片可继续编辑完整调用配置。</p>
+              </div>
+            </div>
+            <div id="apiProfiles" class="apiProfiles"></div>
+          </div>
+          </div>
+
+          <div class="settingsPage" data-settings-page-panel="prompts">
+          <div class="settingsSectionCard promptSystemBlock">
+            <div class="settingsSectionHead">
+              <span>01</span>
+              <div>
+                <h3>Prompt 系统</h3>
+                <p class="muted">默认只展示 Prompt 内容。点击“修改”后才可编辑，完成后再保存全局设置。</p>
+              </div>
+            </div>
+            <div class="promptSystemGrid">
+              <article class="promptSystemCard">
+                <div class="promptSystemHead">
+                  <span>中文</span>
+                  <strong>中文 Prompt 系统</strong>
+                </div>
+                <div class="promptGrid">
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>实体抽取 Prompt</b><small>按文档附录 A 抽取 SERP 页面实体</small></div><button class="secondaryButton promptEditToggle" data-target="entityExtractorPromptZh" type="button">修改</button></div><textarea id="entityExtractorPromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>标题 Prompt</b><small>按文档双轨 SEO/GEO 标题模板</small></div><button class="secondaryButton promptEditToggle" data-target="titlePromptZh" type="button">修改</button></div><textarea id="titlePromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>大纲 Prompt</b><small>生成 SEO + GEO + entity 大纲</small></div><button class="secondaryButton promptEditToggle" data-target="outlinePromptZh" type="button">修改</button></div><textarea id="outlinePromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>正文 Prompt</b><small>生成 SEO/GEO 双版本正文</small></div><button class="secondaryButton promptEditToggle" data-target="articlePromptZh" type="button">修改</button></div><textarea id="articlePromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>评分 AI Prompt</b><small>60 项 E-E-A-T 内容评分</small></div><button class="secondaryButton promptEditToggle" data-target="optimizerPromptZh" type="button">修改</button></div><textarea id="optimizerPromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>内容修改 Prompt</b><small>根据评分建议优化正文</small></div><button class="secondaryButton promptEditToggle" data-target="revisionPromptZh" type="button">修改</button></div><textarea id="revisionPromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>迭代评分 Prompt</b><small>迭代模块专用评分规则</small></div><button class="secondaryButton promptEditToggle" data-target="trainingEvaluatorPromptZh" type="button">修改</button></div><textarea id="trainingEvaluatorPromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>迭代修改 Prompt</b><small>迭代模块专用正文改写</small></div><button class="secondaryButton promptEditToggle" data-target="promptModifierPromptZh" type="button">修改</button></div><textarea id="promptModifierPromptZh" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>搜索规划 Prompt</b><small>按商品和场景生成搜索词</small></div><button class="secondaryButton promptEditToggle" data-target="searchPlannerPromptZh" type="button">修改</button></div><textarea id="searchPlannerPromptZh" rows="7" readonly></textarea></article>
+                </div>
+              </article>
+              <article class="promptSystemCard">
+                <div class="promptSystemHead">
+                  <span>EN</span>
+                  <strong>English Prompt System</strong>
+                </div>
+                <div class="promptGrid">
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Entity Extraction Prompt</b><small>DOC appendix A SERP entity extraction</small></div><button class="secondaryButton promptEditToggle" data-target="entityExtractorPromptEn" type="button">修改</button></div><textarea id="entityExtractorPromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Title Prompt</b><small>DOC dual-track SEO/GEO title template</small></div><button class="secondaryButton promptEditToggle" data-target="titlePromptEn" type="button">修改</button></div><textarea id="titlePromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Outline Prompt</b><small>SEO + GEO + entity outline</small></div><button class="secondaryButton promptEditToggle" data-target="outlinePromptEn" type="button">修改</button></div><textarea id="outlinePromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Article Prompt</b><small>SEO/GEO dual-version article</small></div><button class="secondaryButton promptEditToggle" data-target="articlePromptEn" type="button">修改</button></div><textarea id="articlePromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Scoring AI Prompt</b><small>60-item E-E-A-T scoring</small></div><button class="secondaryButton promptEditToggle" data-target="optimizerPromptEn" type="button">修改</button></div><textarea id="optimizerPromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Content Revision Prompt</b><small>Improve article from scoring advice</small></div><button class="secondaryButton promptEditToggle" data-target="revisionPromptEn" type="button">修改</button></div><textarea id="revisionPromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Iteration Scoring Prompt</b><small>Iteration module scoring rules</small></div><button class="secondaryButton promptEditToggle" data-target="trainingEvaluatorPromptEn" type="button">修改</button></div><textarea id="trainingEvaluatorPromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Iteration Revision Prompt</b><small>Iteration module content rewrite</small></div><button class="secondaryButton promptEditToggle" data-target="promptModifierPromptEn" type="button">修改</button></div><textarea id="promptModifierPromptEn" rows="7" readonly></textarea></article>
+                  <article class="promptEditorCard"><div class="promptEditorHead"><div><b>Search Planner Prompt</b><small>Product-led query planning</small></div><button class="secondaryButton promptEditToggle" data-target="searchPlannerPromptEn" type="button">修改</button></div><textarea id="searchPlannerPromptEn" rows="7" readonly></textarea></article>
+                </div>
+              </article>
+            </div>
+          </div>
+          </div>
+        </section>
+      </section>
+
+      <dialog id="apiProfileDialog" class="apiProfileDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">API Profile</p>
+              <h3>编辑 API 配置</h3>
+            </div>
+            <button class="textButton" id="cancelApiProfile" type="button">关闭</button>
+          </div>
+          <div id="apiProfileEditor"></div>
+          <div class="dialogActions">
+            <button class="secondaryButton" id="cancelApiProfileBottom" type="button">取消</button>
+            <button class="primaryButton" id="saveApiProfile" type="button">保存 API</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="customerSourceDialog" class="apiProfileDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Customer Source</p>
+              <h3>编辑客户搜索源</h3>
+            </div>
+            <button class="textButton" id="cancelCustomerSource" type="button">关闭</button>
+          </div>
+          <div class="apiModalGrid">
+            <div class="apiSection">
+              <p class="apiSectionTitle">基础信息</p>
+              <label>客户源名称<input id="customerSourceName" placeholder="客户 A / 品牌官网 / 分销商列表" /></label>
+              <label>权重<input id="customerSourceWeight" type="number" step="0.5" value="3" /></label>
+              <label class="checkboxLabel"><input id="customerSourceEnabled" type="checkbox" checked /> 启用该客户源</label>
+            </div>
+            <div class="apiSection">
+              <p class="apiSectionTitle">链接集合</p>
+              <textarea id="customerSourceUrls" rows="12" placeholder="每行一个链接，也可以写：URL | 标题 | 备注"></textarea>
+              <label>上传链接文件<input id="customerSourceFile" type="file" accept=".txt,.csv,.md,.json" /></label>
+              <p class="muted">支持 TXT/CSV/MD/JSON。最少需要 URL；标题和备注可选，会参与相关性判断。</p>
+            </div>
+          </div>
+          <div class="dialogActions">
+            <button class="secondaryButton" id="cancelCustomerSourceBottom" type="button">取消</button>
+            <button class="primaryButton" id="saveCustomerSource" type="button">保存客户源</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="trainingBlogDialog" class="apiProfileDialog trainingBlogDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Iteration Source</p>
+              <h3>选择迭代文章</h3>
+            </div>
+            <button class="textButton" id="closeTrainingBlogDialog" type="button">关闭</button>
+          </div>
+          <div class="libraryFilters">
+            <label class="searchField">
+              <span>搜索</span>
+              <input id="trainingBlogSearch" placeholder="搜索标题、商品、标签、版本名" />
+            </label>
+            <label>
+              <span>时间字段</span>
+              <select id="trainingDateField">
+                <option value="updatedAt">最后修改日期</option>
+                <option value="createdAt">创建日期</option>
+              </select>
+            </label>
+            <label>
+              <span>开始日期</span>
+              <input id="trainingDateFrom" type="date" />
+            </label>
+            <label>
+              <span>结束日期</span>
+              <input id="trainingDateTo" type="date" />
+            </label>
+            <button class="secondaryButton" id="clearTrainingFilters" type="button">清除筛选</button>
+          </div>
+          <div id="trainingBlogCards" class="libraryList trainingBlogList"></div>
+        </form>
+      </dialog>
+      <dialog id="importMarkdownDialog" class="apiProfileDialog importMarkdownDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Import Document</p>
+              <h3>导入文档到文章库</h3>
+            </div>
+            <button class="textButton" id="closeImportMarkdownDialog" type="button">关闭</button>
+          </div>
+          <div class="apiModalGrid">
+            <label>文章标题<input id="importMarkdownTitle" placeholder="不填则从第一个 H1 读取" /></label>
+            <label>版本名称<input id="importMarkdownVersion" placeholder="例如 手动导入版本" /></label>
+            <label>商品类型<input id="importMarkdownProductType" placeholder="可选，用于文章库检索" /></label>
+            <label>Tag<input id="importMarkdownTags" placeholder="逗号或空格分隔" /></label>
+          </div>
+          <div class="importFormatSwitch" role="group" aria-label="导入格式">
+            <button class="isActive" id="importFormatMarkdown" type="button" data-format="markdown">Markdown</button>
+            <button id="importFormatHtml" type="button" data-format="html">HTML</button>
+          </div>
+          <label><span id="importMarkdownBodyLabel">Markdown 正文</span>
+            <textarea id="importMarkdownBody" rows="16" placeholder="# 标题&#10;&#10;在这里粘贴 Markdown 文档。"></textarea>
+          </label>
+          <div class="dialogActions">
+            <button class="secondaryButton" id="cancelImportMarkdown" type="button">取消</button>
+            <button class="primaryButton" id="saveImportedMarkdown" type="button">保存到文章库</button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="compareBlogDialog" class="apiProfileDialog trainingBlogDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Score Compare</p>
+              <h3>选择评分比较文章</h3>
+            </div>
+            <button class="textButton" id="closeCompareBlogDialog" type="button">关闭</button>
+          </div>
+          <div class="libraryFilters">
+            <label class="searchField">
+              <span>搜索</span>
+              <input id="compareBlogSearch" placeholder="搜索标题、商品、标签、版本名" />
+            </label>
+            <label>
+              <span>时间字段</span>
+              <select id="compareDateField">
+                <option value="updatedAt">最后修改日期</option>
+                <option value="createdAt">创建日期</option>
+              </select>
+            </label>
+            <label><span>开始日期</span><input id="compareDateFrom" type="date" /></label>
+            <label><span>结束日期</span><input id="compareDateTo" type="date" /></label>
+          </div>
+          <div id="compareBlogCards" class="libraryList trainingBlogList"></div>
+        </form>
+      </dialog>
+      <dialog id="iterationArticleDialog" class="apiProfileDialog iterationDetailDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Iteration Detail</p>
+              <h3 id="iterationArticleTitle">迭代详情</h3>
+            </div>
+            <button class="textButton" id="closeIterationArticleDialog" type="button">关闭</button>
+          </div>
+          <div class="iterationDetailBody">
+            <section class="iterationChangePanel">
+              <div class="detailScore" id="iterationDetailScore"></div>
+              <div id="iterationChangeSummary"></div>
+              <div class="diffGrid">
+                <div class="diffBox add">
+                  <h4>正文新增/强化</h4>
+                  <ul id="iterationAddedList"></ul>
+                </div>
+                <div class="diffBox remove">
+                  <h4>正文删减/弱化</h4>
+                  <ul id="iterationRemovedList"></ul>
+                </div>
+              </div>
+            </section>
+            <article class="markdown" id="iterationArticlePreview"></article>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="blogArticleDialog" class="apiProfileDialog blogArticleDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow">Article Preview</p>
+              <h3 id="blogDialogTitle">文章预览</h3>
+              <p id="blogDialogMeta" class="muted">选择一篇本地文章后查看 Markdown。</p>
+            </div>
+            <div class="dialogHeadActions">
+              <div class="articleViewSwitch" role="group" aria-label="文章查看模式">
+                <button class="isActive" type="button" data-view="markdown">Markdown</button>
+                <button type="button" data-view="html">HTML</button>
+              </div>
+              <button class="textButton" id="collapseBlogPreview" type="button">关闭</button>
+            </div>
+          </div>
+          <article class="markdown" id="markdownPreview"></article>
+          <details class="rawMarkdownBox">
+            <summary>查看 / 编辑 Markdown 原文</summary>
+            <textarea id="markdownOutput" rows="12" placeholder="最终 Markdown 会显示在这里。"></textarea>
+            <div class="markdownEditActions">
+              <button class="secondaryButton" id="saveMarkdownOverwrite" type="button">覆盖保存当前版本</button>
+              <button class="secondaryButton" id="saveMarkdownAsVersion" type="button">另存为新版本</button>
+            </div>
+          </details>
+        </form>
+      </dialog>
+      <dialog id="renameDialog" class="apiProfileDialog renameDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow" id="renameDialogEyebrow">Rename</p>
+              <h3 id="renameDialogTitle">改名</h3>
+            </div>
+            <button class="textButton" id="cancelRenameDialog" type="button">关闭</button>
+          </div>
+          <label><span id="renameDialogLabel">名称</span>
+            <input id="renameDialogInput" />
+          </label>
+          <div class="dialogActions">
+            <button class="secondaryButton" id="cancelRenameDialogBottom" type="button">取消</button>
+            <button class="primaryButton" id="confirmRenameDialog" type="button">保存</button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="messageDialog" class="apiProfileDialog messageDialog">
+        <form method="dialog" class="apiDialogForm">
+          <div class="dialogHead">
+            <div>
+              <p class="eyebrow" id="messageDialogEyebrow">Notice</p>
+              <h3 id="messageDialogTitle">提示</h3>
+            </div>
+            <button class="textButton" id="messageDialogClose" type="button">关闭</button>
+          </div>
+          <p id="messageDialogBody" class="messageDialogBody"></p>
+          <div class="dialogActions">
+            <button class="secondaryButton" id="messageDialogCancel" type="button">取消</button>
+            <button class="primaryButton" id="messageDialogConfirm" type="button">确定</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <script src="/assets/app.js?v=20260529-01"></script>
+  </body>
+</html>
